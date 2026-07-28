@@ -135,8 +135,10 @@ def main():
     print(f"mode                   : {mode}")
 
     if args.simulate:
+        # Only the *import-time* submodule is made absent here; the processor's
+        # lazily-imported submodule (which for Gemma 3 is a different one) is
+        # simulated separately at call time in ARM C, mirroring the real world.
         _simulate_missing(import_missing)
-        _simulate_missing(deferred_missing)
     absent = args.simulate or not real_present
     print(f"target submodule absent for this run: {absent}")
 
@@ -151,9 +153,10 @@ def main():
     try:
         importlib.import_module(module_name)
         print(f"RESULT: imported cleanly ({module_name}).")
-        imported = True
     except ImportError as e:
-        if tag in str(e):
+        # transformers' lazy loader may wrap the failure (e.g. "Could not import
+        # module 'Gemma3Processor'"), so match the family tag case-insensitively.
+        if tag.lower() in str(e).lower():
             print(f"RESULT: {type(e).__name__}: {e}")
             print("  --> STOCK BUG: eager top-level import failed at import time,"
                   " breaking architecture inspection of this arch.")

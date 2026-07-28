@@ -23,6 +23,9 @@ VLLM_DIR="${VLLM_DIR:-$PWD/_vllm_src}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 EVID="$HERE/evidence"
 mkdir -p "$EVID"
+# Clear any previously-committed arm logs so a re-run cannot be confused with
+# stale evidence (run_driver.log is regenerated out of band and left alone).
+rm -f "$EVID"/stock_*.log "$EVID"/fixed_*.log
 
 log() { echo "[run.sh] $*"; }
 

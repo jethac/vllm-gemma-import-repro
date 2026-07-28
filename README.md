@@ -38,12 +38,16 @@ The same pattern exists in three more modules:
 
 vLLM's model **registry inspects an architecture by importing its model
 module** (`ModelRegistry` → `load_model_cls` → `importlib.import_module(...)`).
-So the eager import fires during *inspection*, before any model is loaded, and:
-
-- it breaks inspection of the arch itself (`Gemma4ForConditionalGeneration`), and
-- it breaks **every module that imports the failing one** —
-  `gemma4_unified` and (in the DiffusionGemma fork) `diffusion_gemma` both
-  `import ... gemma4_mm`; `gemma3n_mm` imports the `gemma3n` text backbone.
+So the eager import fires during *inspection*, before any model is loaded, and
+it breaks inspection of the arch itself (`Gemma4ForConditionalGeneration`,
+`Gemma3nForConditionalGeneration`, `Gemma3ForConditionalGeneration`), rather
+than failing only when the model is used. Modules that build on the failing one
+inherit the break — e.g. `gemma3n_mm` imports the `gemma3n` text backbone
+(also fixed here), and `gemma4_unified` / (in the DiffusionGemma fork)
+`diffusion_gemma` build on `gemma4_mm`. (`gemma4_unified` additionally has its
+*own* version-gated `transformers.models.gemma4_unified` import, which is a
+separate module out of scope for this fix — tracked by the same class of change
+in vLLM #48820.)
 
 This is the generalized form of what blocked DiffusionGemma serving on a box
 whose `transformers` predated Gemma 4.
@@ -82,21 +86,25 @@ cd vllm-gemma-import-repro
 
 `run.sh` installs vLLM once with `VLLM_USE_PRECOMPILED=1 pip install -e .`
 (Python-only, downloads a prebuilt wheel — no CUDA toolchain, no GPU needed for
-this import/registry bug), then runs four arms:
+this import/registry bug), then runs, for stock vs fixed:
 
-| log | vLLM | transformers | expect |
-|---|---|---|---|
-| `evidence/stock_real_transformers-5.4.0.log` | stock main | 5.4.0 (real, no gemma4) | **crash** (exit 2) |
-| `evidence/fixed_real_transformers-5.4.0.log` | fixed | 5.4.0 (real, no gemma4) | clean import + register; deferred error (exit 0) |
-| `evidence/stock_simulated_transformers-5.10.2.log` | stock main | 5.10.2 + `--simulate` | **crash** (exit 2) |
-| `evidence/fixed_simulated_transformers-5.10.2.log` | fixed | 5.10.2 + `--simulate` | clean (exit 0) |
+| log | vLLM | transformers | arch | expect |
+|---|---|---|---|---|
+| `evidence/stock_real_gemma4_tf5.4.0.log` | stock main | 5.4.0 (real, no `gemma4`) | gemma4 | **crash** (exit 2) |
+| `evidence/fixed_real_gemma4_tf5.4.0.log` | fixed | 5.4.0 (real, no `gemma4`) | gemma4 | clean import + register; deferred error (exit 0) |
+| `evidence/stock_sim_{gemma4,gemma3n,gemma3}_tf5.10.2.log` | stock main | 5.10.2 + `--simulate` | each | **crash** (exit 2) |
+| `evidence/fixed_sim_{gemma4,gemma3n,gemma3}_tf5.10.2.log` | fixed | 5.10.2 + `--simulate` | each | clean (exit 0) |
+
+Only `gemma4` gets a *real* old-transformers arm, because `transformers==5.4.0`
+still ships `gemma3` and `gemma3n`; those two are exercised with the
+deterministic `--simulate` monkeypatch.
 
 ### Just the check (against a vLLM already on your path)
 
 ```bash
-python repro.py                 # observes whatever vLLM is importable
-python repro.py --simulate      # forces the gemma4 submodule "absent"
-python repro.py --arch Gemma3nForConditionalGeneration --simulate
+python repro.py                            # gemma4, observes whatever vLLM is importable
+python repro.py --simulate                 # forces the gemma4 submodule "absent"
+python repro.py --arch gemma3n --simulate  # gemma3n / gemma3 also supported
 ```
 
 `repro.py` reports what actually happens and exits:
@@ -105,17 +113,15 @@ error deferred to processor use), `3` = unexpected.
 
 ## Expected output
 
-**Stock + missing gemma4** (`ARM A`) — architecture inspection crashes at import:
+**Stock + missing gemma4** (real `transformers==5.4.0`) — inspection crashes at import:
 
 ```
 ARM A -- import vllm.model_executor.models.gemma4_mm
 RESULT: ModuleNotFoundError: No module named 'transformers.models.gemma4'
-  --> STOCK BUG: eager top-level import failed at import time.
-ARM B -- transitive victim: import vllm.model_executor.models.gemma4_unified
-RESULT: ModuleNotFoundError: No module named 'transformers.models.gemma4'
-  --> vllm...gemma4_unified is broken too, because it imports ...gemma4_mm.
+  --> STOCK BUG: eager top-level import failed at import time,
+      breaking architecture inspection of this arch.
 VERDICT
-STOCK vLLM: version-gated eager import crashes at import time, ...
+STOCK vLLM: version-gated eager import crashes at import time.
 [exit code] 2
 ```
 
@@ -127,7 +133,7 @@ RESULT: imported cleanly (vllm.model_executor.models.gemma4_mm).
 ARM B -- architecture still registers
 'Gemma4ForConditionalGeneration' in ModelRegistry.get_supported_archs(): True
 ARM C -- missing dependency surfaces only when the processor is used
-RESULT: ImportError: No module named 'transformers.models.gemma4'
+RESULT: ModuleNotFoundError: No module named 'transformers.models.gemma4'
   --> clear, deferred error naming the missing submodule, raised only on processor use.
 VERDICT
 FIXED vLLM: module imports and registers even without the version-gated

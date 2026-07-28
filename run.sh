@@ -62,16 +62,20 @@ run_arm() {  # <sha> <label> <extra repro args...>
   } 2>&1 | tee "$out"
 }
 
-# --- REAL old-transformers arms (headline) -----------------------------------
-python -c "import transformers,sys;print('[run.sh] transformers',transformers.__version__)" 2>&1 | tail -1
-run_arm "$STOCK_SHA" "stock_real_transformers-$OLD_TF"
-run_arm "$FIXED_SHA" "fixed_real_transformers-$OLD_TF"
+# --- REAL old-transformers arm (headline): only gemma4 is genuinely absent in
+#     transformers 5.4.0 (gemma3 / gemma3n shipped earlier). --------------------
+python -c "import transformers;print('[run.sh] transformers',transformers.__version__)" 2>&1 | tail -1
+run_arm "$STOCK_SHA" "stock_real_gemma4_tf$OLD_TF" --arch gemma4
+run_arm "$FIXED_SHA" "fixed_real_gemma4_tf$OLD_TF" --arch gemma4
 
-# --- deterministic monkeypatch arms on a modern transformers -----------------
+# --- deterministic monkeypatch arms on a modern transformers, covering all
+#     three modules this fix touches. -------------------------------------------
 pip install "transformers==$NEW_TF" 2>&1 | tail -3
-python -c "import transformers,sys;print('[run.sh] transformers',transformers.__version__)" 2>&1 | tail -1
-run_arm "$STOCK_SHA" "stock_simulated_transformers-$NEW_TF" --simulate
-run_arm "$FIXED_SHA" "fixed_simulated_transformers-$NEW_TF" --simulate
+python -c "import transformers;print('[run.sh] transformers',transformers.__version__)" 2>&1 | tail -1
+for arch in gemma4 gemma3n gemma3; do
+  run_arm "$STOCK_SHA" "stock_sim_${arch}_tf$NEW_TF" --arch "$arch" --simulate
+  run_arm "$FIXED_SHA" "fixed_sim_${arch}_tf$NEW_TF" --arch "$arch" --simulate
+done
 
 log "done. evidence in $EVID/"
 ls -la "$EVID"

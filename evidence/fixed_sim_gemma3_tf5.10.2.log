@@ -1,0 +1,40 @@
+############################################################
+# repro arm: fixed_sim_gemma3_tf5.10.2
+# vllm ref : b57f01be01c8bca2339d1b17be4e280ec5009bfd
+# cmd      : python repro.py --arch gemma3 --simulate
+# date     : 2026-07-28T01:50:26Z
+############################################################
+
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.10.2
+arch under test        : Gemma3ForConditionalGeneration  (vllm.model_executor.models.gemma3_mm)
+'transformers.models.gemma3.image_processing_gemma3' importable (real): True
+mode                   : SIMULATED (monkeypatch)
+target submodule absent for this run: True
+
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma3_mm
+========================================================================
+RESULT: imported cleanly (vllm.model_executor.models.gemma3_mm).
+
+========================================================================
+ARM B -- architecture still registers
+========================================================================
+'Gemma3ForConditionalGeneration' in ModelRegistry.get_supported_archs(): True
+
+========================================================================
+ARM C -- missing dependency surfaces only when the processor is used
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma3.processing_gemma3 halted; None in sys.modules
+  --> clear, deferred error naming the missing submodule, raised only on processor use.
+
+========================================================================
+VERDICT
+========================================================================
+FIXED vLLM: module imports and registers even without the
+version-gated transformers submodule; the missing dependency is a
+clear, deferred error at processor-use time -- not an import crash.
+[exit code] 0

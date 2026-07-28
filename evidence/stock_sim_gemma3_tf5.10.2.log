@@ -1,0 +1,28 @@
+############################################################
+# repro arm: stock_sim_gemma3_tf5.10.2
+# vllm ref : 60b3d39cd36c53a698040edbf51406d3febc97a7
+# cmd      : python repro.py --arch gemma3 --simulate
+# date     : 2026-07-28T01:50:20Z
+############################################################
+
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.10.2
+arch under test        : Gemma3ForConditionalGeneration  (vllm.model_executor.models.gemma3_mm)
+'transformers.models.gemma3.image_processing_gemma3' importable (real): True
+mode                   : SIMULATED (monkeypatch)
+target submodule absent for this run: True
+
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma3_mm
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma3.image_processing_gemma3 halted; None in sys.modules
+  --> STOCK BUG: eager top-level import failed at import time, breaking architecture inspection of this arch.
+
+========================================================================
+VERDICT
+========================================================================
+STOCK vLLM: version-gated eager import crashes at import time.
+[exit code] 2

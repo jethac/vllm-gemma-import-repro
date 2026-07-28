@@ -1,0 +1,40 @@
+############################################################
+# repro arm: fixed_real_gemma4_tf5.4.0
+# vllm ref : b57f01be01c8bca2339d1b17be4e280ec5009bfd
+# cmd      : python repro.py --arch gemma4
+# date     : 2026-07-28T01:49:41Z
+############################################################
+
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.4.0
+arch under test        : Gemma4ForConditionalGeneration  (vllm.model_executor.models.gemma4_mm)
+'transformers.models.gemma4' importable (real): False
+mode                   : REAL transformers
+target submodule absent for this run: True
+
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma4_mm
+========================================================================
+RESULT: imported cleanly (vllm.model_executor.models.gemma4_mm).
+
+========================================================================
+ARM B -- architecture still registers
+========================================================================
+'Gemma4ForConditionalGeneration' in ModelRegistry.get_supported_archs(): True
+
+========================================================================
+ARM C -- missing dependency surfaces only when the processor is used
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma4 halted; None in sys.modules
+  --> clear, deferred error naming the missing submodule, raised only on processor use.
+
+========================================================================
+VERDICT
+========================================================================
+FIXED vLLM: module imports and registers even without the
+version-gated transformers submodule; the missing dependency is a
+clear, deferred error at processor-use time -- not an import crash.
+[exit code] 0

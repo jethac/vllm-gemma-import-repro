@@ -1,0 +1,280 @@
+[run.sh] fetching stock 60b3d39cd36c53a698040edbf51406d3febc97a7 and fixed b57f01be01c8bca2339d1b17be4e280ec5009bfd
+From https://github.com/vllm-project/vllm
+ * branch                60b3d39cd36c53a698040edbf51406d3febc97a7 -> FETCH_HEAD
+From https://github.com/jethac/vllm
+ * branch                b57f01be01c8bca2339d1b17be4e280ec5009bfd -> FETCH_HEAD
+[run.sh] installing vLLM (editable, precompiled). This downloads a wheel; CPU is fine.
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+    Found existing installation: vllm 0.26.1rc1.dev6+g60b3d39cd.precompiled
+    Uninstalling vllm-0.26.1rc1.dev6+g60b3d39cd.precompiled:
+      Successfully uninstalled vllm-0.26.1rc1.dev6+g60b3d39cd.precompiled
+Successfully installed vllm-0.26.1rc1.dev6+g60b3d39cd.precompiled
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+vllm 0.26.1rc1.dev6+g60b3d39cd.precompiled requires transformers>=5.5.3, but you have transformers 5.4.0 which is incompatible.
+Successfully installed transformers-5.4.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+[run.sh] transformers 5.4.0
+[run.sh] ARM: stock_real_gemma4_tf5.4.0 (checkout 60b3d39cd36c53a698040edbf51406d3febc97a7) -> evidence/stock_real_gemma4_tf5.4.0.log
+############################################################
+# repro arm: stock_real_gemma4_tf5.4.0
+# vllm ref : 60b3d39cd36c53a698040edbf51406d3febc97a7
+# cmd      : python repro.py --arch gemma4
+# date     : 2026-07-28T01:49:35Z
+############################################################
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.4.0
+arch under test        : Gemma4ForConditionalGeneration  (vllm.model_executor.models.gemma4_mm)
+'transformers.models.gemma4' importable (real): False
+mode                   : REAL transformers
+target submodule absent for this run: True
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma4_mm
+========================================================================
+RESULT: ModuleNotFoundError: No module named 'transformers.models.gemma4'
+  --> STOCK BUG: eager top-level import failed at import time, breaking architecture inspection of this arch.
+========================================================================
+VERDICT
+========================================================================
+STOCK vLLM: version-gated eager import crashes at import time.
+[exit code] 2
+[run.sh] ARM: fixed_real_gemma4_tf5.4.0 (checkout b57f01be01c8bca2339d1b17be4e280ec5009bfd) -> evidence/fixed_real_gemma4_tf5.4.0.log
+############################################################
+# repro arm: fixed_real_gemma4_tf5.4.0
+# vllm ref : b57f01be01c8bca2339d1b17be4e280ec5009bfd
+# cmd      : python repro.py --arch gemma4
+# date     : 2026-07-28T01:49:41Z
+############################################################
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.4.0
+arch under test        : Gemma4ForConditionalGeneration  (vllm.model_executor.models.gemma4_mm)
+'transformers.models.gemma4' importable (real): False
+mode                   : REAL transformers
+target submodule absent for this run: True
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma4_mm
+========================================================================
+RESULT: imported cleanly (vllm.model_executor.models.gemma4_mm).
+========================================================================
+ARM B -- architecture still registers
+========================================================================
+'Gemma4ForConditionalGeneration' in ModelRegistry.get_supported_archs(): True
+========================================================================
+ARM C -- missing dependency surfaces only when the processor is used
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma4 halted; None in sys.modules
+  --> clear, deferred error naming the missing submodule, raised only on processor use.
+========================================================================
+VERDICT
+========================================================================
+FIXED vLLM: module imports and registers even without the
+version-gated transformers submodule; the missing dependency is a
+clear, deferred error at processor-use time -- not an import crash.
+[exit code] 0
+      Successfully uninstalled transformers-5.4.0
+Successfully installed transformers-5.10.2
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+[run.sh] transformers 5.10.2
+[run.sh] ARM: stock_sim_gemma4_tf5.10.2 (checkout 60b3d39cd36c53a698040edbf51406d3febc97a7) -> evidence/stock_sim_gemma4_tf5.10.2.log
+############################################################
+# repro arm: stock_sim_gemma4_tf5.10.2
+# vllm ref : 60b3d39cd36c53a698040edbf51406d3febc97a7
+# cmd      : python repro.py --arch gemma4 --simulate
+# date     : 2026-07-28T01:49:54Z
+############################################################
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.10.2
+arch under test        : Gemma4ForConditionalGeneration  (vllm.model_executor.models.gemma4_mm)
+'transformers.models.gemma4' importable (real): True
+mode                   : SIMULATED (monkeypatch)
+target submodule absent for this run: True
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma4_mm
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma4 halted; None in sys.modules
+  --> STOCK BUG: eager top-level import failed at import time, breaking architecture inspection of this arch.
+========================================================================
+VERDICT
+========================================================================
+STOCK vLLM: version-gated eager import crashes at import time.
+[exit code] 2
+[run.sh] ARM: fixed_sim_gemma4_tf5.10.2 (checkout b57f01be01c8bca2339d1b17be4e280ec5009bfd) -> evidence/fixed_sim_gemma4_tf5.10.2.log
+############################################################
+# repro arm: fixed_sim_gemma4_tf5.10.2
+# vllm ref : b57f01be01c8bca2339d1b17be4e280ec5009bfd
+# cmd      : python repro.py --arch gemma4 --simulate
+# date     : 2026-07-28T01:50:00Z
+############################################################
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.10.2
+arch under test        : Gemma4ForConditionalGeneration  (vllm.model_executor.models.gemma4_mm)
+'transformers.models.gemma4' importable (real): True
+mode                   : SIMULATED (monkeypatch)
+target submodule absent for this run: True
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma4_mm
+========================================================================
+RESULT: imported cleanly (vllm.model_executor.models.gemma4_mm).
+========================================================================
+ARM B -- architecture still registers
+========================================================================
+'Gemma4ForConditionalGeneration' in ModelRegistry.get_supported_archs(): True
+========================================================================
+ARM C -- missing dependency surfaces only when the processor is used
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma4 halted; None in sys.modules
+  --> clear, deferred error naming the missing submodule, raised only on processor use.
+========================================================================
+VERDICT
+========================================================================
+FIXED vLLM: module imports and registers even without the
+version-gated transformers submodule; the missing dependency is a
+clear, deferred error at processor-use time -- not an import crash.
+[exit code] 0
+[run.sh] ARM: stock_sim_gemma3n_tf5.10.2 (checkout 60b3d39cd36c53a698040edbf51406d3febc97a7) -> evidence/stock_sim_gemma3n_tf5.10.2.log
+############################################################
+# repro arm: stock_sim_gemma3n_tf5.10.2
+# vllm ref : 60b3d39cd36c53a698040edbf51406d3febc97a7
+# cmd      : python repro.py --arch gemma3n --simulate
+# date     : 2026-07-28T01:50:07Z
+############################################################
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.10.2
+arch under test        : Gemma3nForConditionalGeneration  (vllm.model_executor.models.gemma3n_mm)
+'transformers.models.gemma3n' importable (real): True
+mode                   : SIMULATED (monkeypatch)
+target submodule absent for this run: True
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma3n_mm
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma3n halted; None in sys.modules
+  --> STOCK BUG: eager top-level import failed at import time, breaking architecture inspection of this arch.
+========================================================================
+VERDICT
+========================================================================
+STOCK vLLM: version-gated eager import crashes at import time.
+[exit code] 2
+[run.sh] ARM: fixed_sim_gemma3n_tf5.10.2 (checkout b57f01be01c8bca2339d1b17be4e280ec5009bfd) -> evidence/fixed_sim_gemma3n_tf5.10.2.log
+############################################################
+# repro arm: fixed_sim_gemma3n_tf5.10.2
+# vllm ref : b57f01be01c8bca2339d1b17be4e280ec5009bfd
+# cmd      : python repro.py --arch gemma3n --simulate
+# date     : 2026-07-28T01:50:13Z
+############################################################
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.10.2
+arch under test        : Gemma3nForConditionalGeneration  (vllm.model_executor.models.gemma3n_mm)
+'transformers.models.gemma3n' importable (real): True
+mode                   : SIMULATED (monkeypatch)
+target submodule absent for this run: True
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma3n_mm
+========================================================================
+RESULT: imported cleanly (vllm.model_executor.models.gemma3n_mm).
+========================================================================
+ARM B -- architecture still registers
+========================================================================
+'Gemma3nForConditionalGeneration' in ModelRegistry.get_supported_archs(): True
+========================================================================
+ARM C -- missing dependency surfaces only when the processor is used
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma3n halted; None in sys.modules
+  --> clear, deferred error naming the missing submodule, raised only on processor use.
+========================================================================
+VERDICT
+========================================================================
+FIXED vLLM: module imports and registers even without the
+version-gated transformers submodule; the missing dependency is a
+clear, deferred error at processor-use time -- not an import crash.
+[exit code] 0
+[run.sh] ARM: stock_sim_gemma3_tf5.10.2 (checkout 60b3d39cd36c53a698040edbf51406d3febc97a7) -> evidence/stock_sim_gemma3_tf5.10.2.log
+############################################################
+# repro arm: stock_sim_gemma3_tf5.10.2
+# vllm ref : 60b3d39cd36c53a698040edbf51406d3febc97a7
+# cmd      : python repro.py --arch gemma3 --simulate
+# date     : 2026-07-28T01:50:20Z
+############################################################
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.10.2
+arch under test        : Gemma3ForConditionalGeneration  (vllm.model_executor.models.gemma3_mm)
+'transformers.models.gemma3.image_processing_gemma3' importable (real): True
+mode                   : SIMULATED (monkeypatch)
+target submodule absent for this run: True
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma3_mm
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma3.image_processing_gemma3 halted; None in sys.modules
+  --> STOCK BUG: eager top-level import failed at import time, breaking architecture inspection of this arch.
+========================================================================
+VERDICT
+========================================================================
+STOCK vLLM: version-gated eager import crashes at import time.
+[exit code] 2
+[run.sh] ARM: fixed_sim_gemma3_tf5.10.2 (checkout b57f01be01c8bca2339d1b17be4e280ec5009bfd) -> evidence/fixed_sim_gemma3_tf5.10.2.log
+############################################################
+# repro arm: fixed_sim_gemma3_tf5.10.2
+# vllm ref : b57f01be01c8bca2339d1b17be4e280ec5009bfd
+# cmd      : python repro.py --arch gemma3 --simulate
+# date     : 2026-07-28T01:50:26Z
+############################################################
+========================================================================
+ENVIRONMENT
+========================================================================
+python                 : 3.11.10
+transformers           : 5.10.2
+arch under test        : Gemma3ForConditionalGeneration  (vllm.model_executor.models.gemma3_mm)
+'transformers.models.gemma3.image_processing_gemma3' importable (real): True
+mode                   : SIMULATED (monkeypatch)
+target submodule absent for this run: True
+========================================================================
+ARM A -- import vllm.model_executor.models.gemma3_mm
+========================================================================
+RESULT: imported cleanly (vllm.model_executor.models.gemma3_mm).
+========================================================================
+ARM B -- architecture still registers
+========================================================================
+'Gemma3ForConditionalGeneration' in ModelRegistry.get_supported_archs(): True
+========================================================================
+ARM C -- missing dependency surfaces only when the processor is used
+========================================================================
+RESULT: ModuleNotFoundError: import of transformers.models.gemma3.processing_gemma3 halted; None in sys.modules
+  --> clear, deferred error naming the missing submodule, raised only on processor use.
+========================================================================
+VERDICT
+========================================================================
+FIXED vLLM: module imports and registers even without the
+version-gated transformers submodule; the missing dependency is a
+clear, deferred error at processor-use time -- not an import crash.
+[exit code] 0
+[run.sh] done. evidence in /workspace/vllm-gemma-import-repro/evidence/
+total 36
+drwxr-xr-x 2 root root 4096 Jul 28 01:50 .
+drwxr-xr-x 5 root root  174 Jul 28 01:47 ..
+-rw-r--r-- 1 root root 2038 Jul 28 01:49 fixed_real_gemma4_tf5.4.0.log
+-rw-r--r-- 1 root root 2097 Jul 28 01:50 fixed_sim_gemma3_tf5.10.2.log
+-rw-r--r-- 1 root root 2064 Jul 28 01:50 fixed_sim_gemma3n_tf5.10.2.log
+-rw-r--r-- 1 root root 2055 Jul 28 01:50 fixed_sim_gemma4_tf5.10.2.log
+-rw-r--r-- 1 root root 1367 Jul 28 01:49 stock_real_gemma4_tf5.4.0.log
+-rw-r--r-- 1 root root 1452 Jul 28 01:50 stock_sim_gemma3_tf5.10.2.log
+-rw-r--r-- 1 root root 1411 Jul 28 01:50 stock_sim_gemma3n_tf5.10.2.log
+-rw-r--r-- 1 root root 1404 Jul 28 01:50 stock_sim_gemma4_tf5.10.2.log

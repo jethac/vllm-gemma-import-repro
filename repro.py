@@ -182,13 +182,12 @@ def main():
         ok = registered
     else:
         module = sys.modules[module_name]
-        if args.simulate:
-            # With a modern transformers, importing vllm may have populated the
-            # real submodule, and (for Gemma 3) the processor's submodule was not
-            # simulated up front -- so assert absence now, just before use.
-            _simulate_missing(deferred_missing)
-        # In REAL mode the submodule is genuinely absent, so the lazy import
-        # fails naturally ("No module named ...") with no monkeypatch involved.
+        # Assert absence right before use: with a modern transformers, importing
+        # vllm may have populated the real submodule, and (for Gemma 3) the
+        # processor's submodule was not simulated up front. A ``None`` entry
+        # makes the lazy import raise ``ModuleNotFoundError: ... halted; None in
+        # sys.modules`` -- a genuine, deferred failure naming the submodule.
+        _simulate_missing(deferred_missing)
         ok = False
         try:
             case["invoke"](module)

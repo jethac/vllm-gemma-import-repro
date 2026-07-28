@@ -133,7 +133,7 @@ RESULT: imported cleanly (vllm.model_executor.models.gemma4_mm).
 ARM B -- architecture still registers
 'Gemma4ForConditionalGeneration' in ModelRegistry.get_supported_archs(): True
 ARM C -- missing dependency surfaces only when the processor is used
-RESULT: ModuleNotFoundError: import of transformers.models.gemma4 halted; None in sys.modules
+RESULT: ModuleNotFoundError: No module named 'transformers.models.gemma4'
   --> clear, deferred error naming the missing submodule, raised only on processor use.
 VERDICT
 FIXED vLLM: module imports and registers even without the version-gated
